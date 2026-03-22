@@ -1,0 +1,19 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+lib/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+
+# Rider / Resharper
+.idea/
+*.sln.iml
+/AIproject/AIproject/appsettings.Development.json
