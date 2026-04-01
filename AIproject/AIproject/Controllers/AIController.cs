@@ -1,7 +1,5 @@
 ﻿using AIproject.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 
 namespace AIproject.Controllers
 {
@@ -9,15 +7,19 @@ namespace AIproject.Controllers
     [ApiController]
     public class AIController : ControllerBase
     {
-        private readonly OllamaService _ollamaService;
-        public AIController(OllamaService ollamaService) {
-            _ollamaService = ollamaService;
+        private readonly RAGService _ragService;
+
+        public AIController(RAGService ragService)
+        {
+            _ragService = ragService;
         }
 
         public class UserRequest
         {
             public string Input { get; set; }
+            public int ID { get; set; }
         }
+
         [HttpPost("AskAI")]
         public async Task<IActionResult> AskAI([FromBody] UserRequest request)
         {
@@ -25,8 +27,8 @@ namespace AIproject.Controllers
             {
                 return BadRequest("You did not give any input.");
             }
-            var answer = await _ollamaService.HandleRequest(request.Input);
-            return Ok(new { message = answer });
+            var answer = await _ragService.HandleAsync(request.Input);
+            return Ok(new { id = request.ID + 1, type = "ai", content = answer, timestamp = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds() });
         }
     }
 }

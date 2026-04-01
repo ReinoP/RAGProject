@@ -17,3 +17,4 @@ packages/
 .idea/
 *.sln.iml
 /AIproject/AIproject/appsettings.Development.json
+/AIproject/AIproject/app.db

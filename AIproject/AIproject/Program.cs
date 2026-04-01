@@ -1,3 +1,7 @@
+using AIproject.Data;
+using AIproject.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,9 +9,17 @@ builder.Services.AddRazorPages();
 
 // Add controller support and register OllamaService before building the app
 builder.Services.AddControllers();
-builder.Services.AddHttpClient<AIproject.Services.OllamaService>();
+builder.Services.AddHttpClient();
+// Register DbContext
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<LLMService>();
+builder.Services.AddScoped<RAGService>();
+builder.Services.AddScoped<EmbeddingService>();
 
 var app = builder.Build();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

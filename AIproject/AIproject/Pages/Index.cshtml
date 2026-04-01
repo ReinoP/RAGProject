@@ -1,69 +1,352 @@
 ﻿@page
-@model IndexModel
+@model AIproject.Pages.ChatPageModel
 @{
-    ViewData["Title"] = "Home page";
 }
-    <div id="aiApp" class="text-center">
-        <h1 class="display-4">Welcome</h1>
-        <div>
-        <input type="text" id="userInput" placeholder="Type in your question" />
-        <button type="button" @@click="askAI">Ask AI</button>
-        </div>
-        <div>
-            <div v-if="questionText">
-                You asked : {{questionText}}
-            </div>
-            <div v-if="answerText">
-                <h2>The computer says:</h2>
-                <span id="AIAnswer">{{answerText}}</span>
-            </div>
 
+<div class="min-h-screen" id="app">
+    <!-- TopNavBar -->
+    <header class="fixed left-0 top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+        <div class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+            <div class="flex items-center gap-8">
+                <span class="text-xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-300 font-headline">My AI miniproject</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button @@click="resetRAGData" class="primary-gradient text-on-primary px-5 py-2 rounded-xl text-sm font-semibold active:scale-95 transition-transform shadow-md">
+                    Reset RAG Data
+                </button>
+            </div>
+        </div>
+    </header>
+    <!-- Main Canvas -->
+    <main class="lg:ml-64 pt-24 pb-12 px-6">
+        <div class="max-w-3xl mx-auto space-y-16">
+        <div class="space-y-8 ">
+            <!-- Scrollable messages container. The max-height uses calc so it stays between the fixed header and the fixed input. -->
+            <div ref="messageContainer" class="max-h-[calc(100vh-12rem)] overflow-y-auto scroll-smooth space-y-8">
+                <div v-for="message in chatHistory" :key="message.id">
+                    <!-- User Question --> 
+                    <div v-if="message.type === 'user'" class="flex flex-col items-end ml-auto space-y-2">
+                        <div class="bg-primary-container text-on-primary-container px-6 py-4 rounded-2xl rounded-tr-none max-w-[85%] min-w-[120px] shadow-sm flex flex-col text-right">
+                            <div v-html="message.content"></div>
+                            <div class="self-end text-[10px] font-semibold text-outline mt-1">
+                                {{ renderTimeStamp(message.timestamp) }}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- AI Answer -->
+                    <div v-if="message.type === 'ai'" class="flex flex-col items-start space-y-2 group">
+                        <div class="bg-primary-container text-on-primary-container px-6 py-4 rounded-2xl rounded-tl-none max-w-[85%] min-w-[120px] shadow-sm flex flex-col text-left">
+                            <div v-html="message.content"></div>
+                            <div class="self-start text-[10px] font-semibold text-outline mt-1">
+                                {{ renderTimeStamp(message.timestamp) }}
+                            </div>
+                        </div>
+                    </div>
+             
+                </div>
+            </div>
+        </div>
+        <!-- Input Area -->
+        <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-3xl px-6 z-50">
+            <div class="glass-effect p-2 rounded-2xl shadow-xl border border-white/20">
+                <div class="relative flex items-center bg-surface-container-lowest rounded-xl p-1.5 transition-all focus-within:ring-2 focus-within:ring-primary/20">
+                    <div class="flex-grow flex items-center px-4">
+                        <span class="material-symbols-outlined text-outline mr-3" data-icon="temp_preferences_custom">temp_preferences_custom</span>
+                        <input @@keyup.enter="sendMessage" class="w-full bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline font-body py-3 text-sm" placeholder="Ask anything..." type="text" v-model="userInput"/>
+                    </div>
+                    <div class="flex items-center gap-2 pr-2">
+                        <button class="p-2 text-outline hover:text-primary hover:bg-primary-container rounded-lg transition-all" @@click="setShowUploadModal(true)"  >
+                            <span class="material-symbols-outlined" data-icon="attach_file" >attach_file</span>
+                        </button>
+                        <button @@click="sendMessage" class="primary-gradient text-white flex items-center gap-2 px-6 py-2.5 rounded-lg font-headline font-bold text-sm shadow-lg active:scale-95 transition-transform">
+                            <span>Ask</span>
+                            <span class="material-symbols-outlined text-sm" data-icon="send">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3 text-center">
+            <p class="text-[10px] text-outline font-medium tracking-wide">AI MAY DISPLAY INACCURATE INFO. VERIFY IMPORTANT DETAILS.</p>
+            </div>
+        </div>
+        <!-- Modal Overlay -->
+
+        <div v-if="showUploadModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-lg w-full p-6 relative">
+                <button @@click="showUploadModal = false" class="absolute top-2 right-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    ✕
+                </button>
+
+                <h2 class="text-xl font-bold mb-4">Upload File</h2>
+                <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                    Select a file to upload to RAG.
+                    Please insert pre-processed data only, e.g. no html/markdown or table formats. Only upload .txt files.
+                </p>
+                <input type="file" class="mb-4 w-full" @@change="fileSelected" />
+                <div class="flex justify-end gap-3">
+                    <button @@click="showUploadModal = false" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">
+                        Cancel
+                    </button>
+                    <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" @@click="uploadFile" style="display: inline-flex;">
+                        <span>{{ loading ? 'Uploading...' : 'Upload' }}</span>
+                        <span v-if="loading" class="mr-2">
+                              <svg v-if="loading" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                              </svg>
+                        </span>
+                    </button>
+                </div>
+                <div v-if="invalidFileType">
+                    <p class="text-red-500">Invalid file type.</p>
+                </div>
+            </div>
         </div>
     </div>
 
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    </main>
+    <!-- Status Badge -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <div class="bg-tertiary-container text-on-tertiary-container px-4 py-1.5 rounded-full flex items-center gap-2 shadow-lg animate-pulse border border-white/50">
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            <span class="text-[11px] font-bold tracking-tight uppercase">System Online</span>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#0053db",
+                    "tertiary": "#565e78",
+                    "surface-container-high": "#e1e9ee",
+                    "on-secondary-fixed-variant": "#5a5b5e",
+                    "primary-fixed": "#dbe1ff",
+                    "background": "#f7f9fb",
+                    "on-error-container": "#752121",
+                    "surface-tint": "#0053db",
+                    "on-primary-container": "#0048bf",
+                    "on-tertiary": "#f9f8ff",
+                    "secondary-container": "#e2e2e5",
+                    "on-secondary-fixed": "#3e3f42",
+                    "on-tertiary-container": "#424a63",
+                    "surface-variant": "#d9e4ea",
+                    "surface-dim": "#cfdce3",
+                    "on-primary": "#f8f7ff",
+                    "primary-fixed-dim": "#c7d3ff",
+                    "tertiary-container": "#ced6f5",
+                    "error-dim": "#4e0309",
+                    "on-tertiary-fixed-variant": "#4b546d",
+                    "tertiary-dim": "#4a536c",
+                    "tertiary-fixed": "#ced6f5",
+                    "secondary": "#5d5f62",
+                    "on-surface-variant": "#566166",
+                    "error": "#9f403d",
+                    "on-secondary-container": "#505255",
+                    "secondary-dim": "#515356",
+                    "surface-container-highest": "#d9e4ea",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#c0c8e6",
+                    "primary-container": "#dbe1ff",
+                    "on-background": "#2a3439",
+                    "on-primary-fixed-variant": "#0050d4",
+                    "inverse-primary": "#618bff",
+                    "secondary-fixed-dim": "#d4d4d7",
+                    "inverse-surface": "#0b0f10",
+                    "on-surface": "#2a3439",
+                    "secondary-fixed": "#e2e2e5",
+                    "outline-variant": "#a9b4b9",
+                    "on-primary-fixed": "#003798",
+                    "on-secondary": "#f9f9fc",
+                    "on-error": "#fff7f6",
+                    "outline": "#717c82",
+                    "surface-container-low": "#f0f4f7",
+                    "error-container": "#fe8983",
+                    "surface-container": "#e8eff3",
+                    "surface": "#f7f9fb",
+                    "primary-dim": "#0048c1",
+                    "inverse-on-surface": "#9a9d9f",
+                    "on-tertiary-fixed": "#2f374f",
+                    "surface-bright": "#f7f9fb"
+                },
+                fontFamily: {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+                },
+                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+        },
+    }
+</script>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+    }
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+    }
+    .primary-gradient {
+        background: linear-gradient(135deg, #0053db 0%, #0048c1 100%);
+    }
+</style>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
 <script>
+    
     const app = Vue.createApp({
         data() {
             return {
                 answerText: null,
                 questionText: null,
+                chatHistory:[],
+                isSending: false,
+                userInput: '',
+                activeTab:null,
+                currentNav: "Chat",
+                latestAIAnsweId :null,
+                currentChatId: null,
+                fileInput: null,
+                showUploadModal:false,
+                loading:false,
+                invalidFileType: false
             };
        },
-        methods: {
-            changeMessage() {
-                this.message = "Viestin sisältö vaihtui!";
-            },
-            async askAI() {
-                console.log("hello world")
-                let inputEl = document.getElementById("userInput");
-                let prompt = inputEl.value;
-
-                inputEl.value = null;
-                console.log("prompt: "+ prompt);
-
-                const res = await fetch("/api/ai/AskAI", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({input: prompt })
+       watch:{
+            // Auto-scroll when messages change
+            chatHistory(newVal, oldVal){
+                // wait for DOM update then scroll
+                this.$nextTick(() => {
+                    this.scrollToBottom();
                 });
-
-                console.log(res)
-
-                if(res != null && res.status == 200){
-                    const data = await res.json();
-                    this.questiontext = prompt;
-                    console.log(data);
-                    console.log(typeof data);
-                    this.answerText = data.message;
-                }
-                else{
-                    this.answerText = null;
-                    this.questiontext = prompt;
-                }
             }
+       },
+        methods: {
+            async scrollToBottom(){
+                   await this.$nextTick();
+                   const el = this.$refs.messageContainer;
+                   if (el && typeof el.scrollTop !== 'undefined') {
+                        el.scrollTop = el.scrollHeight;
+                   }
+             },
+            async sendMessage() {
+                let date = Date.now();
+
+                if (!this.userInput || this.userInput.trim() === '') {
+                    this.chatHistory.push({id:this.currentChatId + 1, type:"ai",  content:"Im sorry, what did you want?", timestamp: date});
+                    return;
+                }
+                let prompt = this.userInput;
+                this.userInput = '';
+             
+                this.currentChatId = this.chatHistory[this.chatHistory.length -1]?.id;
+                if(!this.currentChatId){
+                    this.currentChatId = 1;
+                }
+
+                this.chatHistory.push({id:this.currentChatId, type:"user",  content:prompt, timestamp: date});
+                await this.scrollToBottom();
+
+                this.isSending = true;
+                try {
+                    console.log("prompt", prompt)
+                    let res = await fetch("/api/ai/AskAI", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id:this.currentChatId, input: prompt })
+                    });
+
+                    if (res && res.status === 200) {
+                        let data = await res.json();
+                        console.log(data)
+                        this.chatHistory.push(data);
+                        this.latestAIAnsweId = data.id;
+                        await this.scrollToBottom();
+
+                    }
+                } catch (e) {
+                    console.log("error", e);
+                } finally {
+                    this.isSending = false;
+                }
+            },
+            renderTimeStamp(ts){
+                let date = ts < 1e12 ? new Date(ts * 1000) : new Date(ts);
+                return date.toLocaleString(); 
+            },
+            setShowUploadModal(val){
+                this.showUploadModal = val;
+            },
+            async resetRAGData(){
+                //TODO some popup to inform its done?
+                let res = await fetch("/api/api/DeleteRAGData", {
+                    method: 'DELETE',
+                });
+            },
+            fileSelected(event){
+                if(!event || !event.target || !event.target.files){
+                   return
+               }
+
+                this.fileInput = event.target.files[0];
+
+               if(!this.isValidFile(this.fileInput)){
+                   this.fileInput = null;
+                   return;
+               }
+                console.log("uploadFile", this.fileInput)
+            },
+           async uploadFile(){
+                if(!this.fileInput){
+                    console.log("no file found")
+                    return;
+                }
+
+               this.loading = true;
+               let formData = new FormData();
+               formData.append("fileModel", this.fileInput);
+
+               let res = await fetch("/api/api/UploadFile", {
+                             method: "POST",
+                             body: formData
+                          });
+
+               this.loading = false;
+            },
+            isValidFile(file) {
+               this.invalidFileType = false;
+
+                if(!file){
+                    return true;
+                }
+                let ext = file.name.split('.').pop().toLowerCase();
+
+                if (file.type !== 'text/plain' || ext !== "txt"){
+                    this.invalidFileType = true;
+                    return false;
+                }
+              
+              return true;
+            },
+        },
+        mounted(){
+            let time = Date.now();
+            this.chatHistory.push({id:1, type:"ai", content:"Hello there! I am an AI assistant here to help you. I use Retrieval-augmented generation to answer your questions.", timestamp:time});
+            this.$nextTick(() => {
+                this.scrollToBottom();
+            });
         }
      });
 
-    app.mount('#aiApp');
+    app.mount('#app');
+
 </script>

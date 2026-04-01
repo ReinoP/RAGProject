@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AIproject.Pages
 {
-    public class ChatPageModel : PageModel
+    public class IndexModel : PageModel
     {
         public void OnGet()
         {
+
         }
     }
 }
