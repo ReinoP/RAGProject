@@ -18,3 +18,5 @@ packages/
 *.sln.iml
 /AIproject/AIproject/appsettings.Development.json
 /AIproject/AIproject/app.db
+/AIproject/AIproject/app.db-shm
+/AIproject/AIproject/app.db-wal
