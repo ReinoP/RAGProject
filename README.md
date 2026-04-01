@@ -29,6 +29,10 @@ You should also disable cloud models, auto-download uploads, and "Expose Ollama 
 You can change context length as you wish, for me 4k was enough for my small tests.
 
 And you should be ready to go!
+
+## There is a test_data.txt in /Docs folder for quick uploading and testing.
+
+
 ---
 
 ### Tech Stack
