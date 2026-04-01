@@ -36,6 +36,6 @@ Used local LLMs for gaining some more experience, and they were free, flexible a
 - Vue Options API for reactive and maintainable frontend components  
 ---
 
-![RAG demo upload](images/RAGUpload.png)
-![RAG demo questions](images/RAGQuestions.png)
+![RAG demo upload](Images/RAGUpload.png)
+![RAG demo questions](Images/RAGQuestions.png)
 *Simple UI showing document upload and question-answer interface*
