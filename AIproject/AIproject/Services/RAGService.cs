@@ -1,6 +1,7 @@
 ﻿using AIproject.Data;
 using AIproject.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -11,19 +12,20 @@ namespace AIproject.Services
         private readonly AppDbContext _dbContext;
         private readonly EmbeddingService _embeddingService;
         private readonly LLMService _lLMService;
+        private readonly IMemoryCache _cache;
 
-        public RAGService(AppDbContext dbContext, EmbeddingService embeddingService, LLMService llmService)
+        public RAGService(AppDbContext dbContext, EmbeddingService embeddingService, LLMService llmService, IMemoryCache cache)
         {
             _dbContext = dbContext;
             _embeddingService = embeddingService;
             _lLMService = llmService;
+            _cache = cache;
         }
         public async Task<List<string>> ChunkText(string text, int chunkSize = 500)
         {
             //some basic sanitization
             text = Regex.Replace(text, @"<script.*?>.*?</script>", "", RegexOptions.Singleline | RegexOptions.IgnoreCase);
             text = Regex.Replace(text, @"<style.*?>.*?</style>", "", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            text = text.Replace('\t', ' ');
             text = Regex.Replace(text, @"\s+", " ");
             text = Regex.Replace(text, @"[#*_>`~\-]+", "");
             text = Regex.Replace(text, "<.*?>", "").Trim();
@@ -38,6 +40,7 @@ namespace AIproject.Services
         public async Task ProcessDocumentAsync(string content, string fileName)
         {
             var embeddings = new List<string>();
+            //first we could check if this file has already been processed, and if so, skip it. For simplicity we skip this step here, but in production it would be crucial to avoid duplicates and save resources.
             var chunks = await ChunkText(content);
             int chunkIndex = 0;
             //Could be optimized by doing embeddings in batches, but for simplicity we do it one by one here.
@@ -48,7 +51,6 @@ namespace AIproject.Services
                     var embedding = await _embeddingService.GetEmbedding(chunk);
                     var embeddingJson = JsonSerializer.Serialize(embedding);
 
-                    // create model
                     var docChunk = new DocumentChunk
                     {
                         Content = chunk,
@@ -60,14 +62,15 @@ namespace AIproject.Services
                     chunkIndex++;
                 } 
                 catch {
-                    //TODO log
+                    //Here there could be some logging
                     continue;
                 }
             }
 
             if (chunks.Any())
             {
-                //TODO, check if filename already has uploaded stuff, then maybe confirm from user if they want to re-upload the data?
+                _cache.Remove("chunks");
+
                 _dbContext.DocumentChunks.AddRange(chunks.Select((c, idx) => new DocumentChunk
                 {
                     Content = c,
@@ -77,8 +80,8 @@ namespace AIproject.Services
                 }));
                 _dbContext.SaveChanges();
             }
-
         }
+
         //https://www.ibm.com/think/topics/cosine-similarity
         private double CosineSimilarity(float[] a, float[] b)
         {
@@ -98,15 +101,25 @@ namespace AIproject.Services
 
             return dot / (Math.Sqrt(magA) * Math.Sqrt(magB));
         }
+
         public async Task<List<DocumentChunk>> QueryAsync(string userQuestion, int topK = 10)
         {
             var queryEmbedding = await _embeddingService.GetEmbedding(userQuestion);
             var topChunks = new List<DocumentChunk>();
             try { 
-                //TODO do not load them always. Set up a cache, and update it on upload and/or periodically.
-                var chunks = await _dbContext.DocumentChunks.ToListAsync<DocumentChunk>();
+                var chunks =  new List<DocumentChunk>();
+                if (_cache.TryGetValue("chunks", out List<DocumentChunk>? cachedChunks)){
+                    chunks = cachedChunks;
+                }
+                else {
+                    chunks = await _dbContext.DocumentChunks.ToListAsync<DocumentChunk>();
+                    var cacheOptions = new MemoryCacheEntryOptions()
+                                       .SetSlidingExpiration(TimeSpan.FromMinutes(10)) 
+                                       .SetAbsoluteExpiration(TimeSpan.FromMinutes(15)); 
+                    _cache.Set("chunks", chunks, cacheOptions);
+                }
 
-                var scoredChunks = chunks.Select(c =>
+                var scoredChunks = chunks?.Select(c =>
                 {
                     var chunkEmbedding = JsonSerializer.Deserialize<float[]>(c.Embedding);
                     if (chunkEmbedding == null) return new { Chunk = c, Score = -1.0 };
@@ -115,20 +128,19 @@ namespace AIproject.Services
                     return new { Chunk = c, Score = score };
                 });
 
-                topChunks = scoredChunks
+                topChunks = scoredChunks?
                     .OrderByDescending(x => x.Score)
                     .Take(topK)
                     .Select(x => x.Chunk)
                     .ToList();
-
             }
             catch
             {
-                //TODO log
-                ;
+                //Here there could be some logging
             }
-            return topChunks;
+            return topChunks ?? new List<DocumentChunk>();
         }
+
         public async Task<string> HandleAsync(string input)
         {
             var topChunks = await QueryAsync(input);
@@ -138,6 +150,7 @@ namespace AIproject.Services
 
         public async Task EmptyDocumentChunks()
         {
+            _cache.Remove("chunks");
             _dbContext.DocumentChunks.RemoveRange(_dbContext.DocumentChunks);
             _dbContext.SaveChanges();
         }

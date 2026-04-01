@@ -45,7 +45,7 @@ namespace AIproject.Services
             }
             catch
             {
-                //TODO log
+                //Here there could be some logging
             }
             return embedding;
         }

@@ -40,7 +40,7 @@ namespace AIproject.Controllers
             }
             catch(Exception ex)
             {
-                //TODO log error
+                //Here there could be some logging
                 return StatusCode(500, new { success = false, error = "Something went wrong with upload." }); 
             }
         }
