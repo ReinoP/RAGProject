@@ -50,6 +50,6 @@ And you should be ready to go!
 - Vue Options API for reactive and maintainable frontend components  
 ---
 
-![RAG demo upload](Images/RAGUpload.png)
-![RAG demo questions](Images/RAGQuestions.png)
+![RAG demo upload](Docs/RAGUpload.png)
+![RAG demo questions](Docs/RAGQuestions.png)
 *Simple UI showing document upload and question-answer interface*
