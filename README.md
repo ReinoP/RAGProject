@@ -1,14 +1,19 @@
 # Project
 
-A simple web application for Retrieval-augmented generation (RAG) using **.NET Core MVC** for the backend, **Vue.js (Options API)** for the frontend, and **Ollama** for AI-powered functionalities with the latest `embeddinggemma` and `llama` models.
-User can upload text documents, then they are split into smaller chunks and embedded with embeddinggemma. These embeddings are stored in SQLite. 
-When a question is asked, the system finds the most relevant chunks using cosine similarity, then the LLM (Llama) produces an answer using that context.
----
+This project is a full-stack web application that demonstrates a Retrieval-Augmented Generation (RAG) pipeline using local LLM models via Ollama.
 
-## Table of Contents
+Users can upload text documents and query their content using natural language. 
+The system processes documents by splitting them into chunks, generating embeddings, and storing them for efficient semantic retrieval.
 
-- [Tech Stack](#tech-stack)  
-- [Features](#features)  
+When a user asks a question, the application retrieves the most relevant document chunks using cosine similarity 
+and provides them as context to a local LLM (Llama), which generates the final answer.
+
+Originally I intented to make a more multifaceted project with many different LLMs, with orchestrators and different services,
+but at the end I decided to focus on RAG, and possibly use what I learned in another project instead.
+
+Because this was my first small hands-on project with LLMs:
+I used SQLite instead of an actual vector database and embeddings are stored as JSON strings to keep it simple, naturally for production this would not suffice.
+Used local LLMs for gaining some more experience, and they were free, flexible and enough for my purposes with this project.
 
 ---
 
@@ -17,10 +22,10 @@ When a question is asked, the system finds the most relevant chunks using cosine
 - **Backend:** .NET Core MVC  
 - **Frontend:** Vue.js (Options API)  
 - **AI Models:** Ollama ->  `embeddinggemma` (latest), `llama` (latest)  
-- **Caching:** In-memory caching via `IMemoryCache`  
-- **SQLite:** Simple and light-weight databasse
+- **Caching:** In-memory caching
+- **SQLite:** Simple and light-weight database
 - **TailWind:** For CSS
-- **Google Stich:** Used for basic UI layout
+- **Google Stitch:** Used for basic UI layout
 ---
 
 ## Features
