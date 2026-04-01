@@ -163,7 +163,7 @@ namespace AIproject.Services
                 Use tags like <p>, <ul>, <li>, <b>.
                     - Use <p> for paragraphs
                     - Use <ul><li> for lists
-                    - Use <b> for important labels (e.g., 'Answer:')
+                    - Use <b> for important labels
                     - Keep structure simple and readable
                 Return valid HTML only.
 
