@@ -35,3 +35,7 @@ Used local LLMs for gaining some more experience, and they were free, flexible a
 - MVC pattern for clean separation of concerns  
 - Vue Options API for reactive and maintainable frontend components  
 ---
+
+![RAG demo upload](images/RAGUpload.png)
+![RAG demo questions](images/RAGQuestions.png)
+*Simple UI showing document upload and question-answer interface*
