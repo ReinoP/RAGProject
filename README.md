@@ -19,6 +19,8 @@ When a question is asked, the system finds the most relevant chunks using cosine
 - **AI Models:** Ollama ->  `embeddinggemma` (latest), `llama` (latest)  
 - **Caching:** In-memory caching via `IMemoryCache`  
 - **SQLite:** Simple and light-weight databasse
+- **TailWind:** For CSS
+- **Google Stich:** Used for basic UI layout
 ---
 
 ## Features
