@@ -15,9 +15,23 @@ Because this was my first small hands-on project with LLMs:
 I used SQLite instead of an actual vector database and embeddings are stored as JSON strings to keep it simple, naturally for production this would not suffice.
 Used local LLMs for gaining some more experience, and they were free, flexible and enough for my purposes with this project.
 
+
+## How to setup SQLite after cloning the repo
+in powershell type in these commands:
+Add-Migration InitialCreate
+Update-Database
+
+## Setup Ollama
+Download Ollama https://ollama.com
+in cmd-prompt you can then "ollama pull embeddinggemma" and "ollama pull llama3" to download the required LLMs
+NOTE that Ollama service will run on your pc startup automatically unless you configure otherwise. 
+You should also disable cloud models, auto-download uploads, and "Expose Ollama to the network" settings.
+You can change context length as you wish, for me 4k was enough for my small tests.
+
+And you should be ready to go!
 ---
 
-## Tech Stack
+### Tech Stack
 
 - **Backend:** .NET Core MVC  
 - **Frontend:** Vue.js (Options API)  
@@ -28,7 +42,7 @@ Used local LLMs for gaining some more experience, and they were free, flexible a
 - **Google Stitch:** Used for basic UI layout
 ---
 
-## Features
+### Features
 
 - AI-powered embeddings and responses using Ollama models  
 - Simple caching system for improving response times  
