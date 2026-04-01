@@ -15,6 +15,7 @@ Because this was my first small hands-on project with LLMs:
 I used SQLite instead of an actual vector database and embeddings are stored as JSON strings to keep it simple, naturally for production this would not suffice.
 Used local LLMs for gaining some more experience, and they were free, flexible and enough for my purposes with this project.
 
+There are still some improvements that could be done, as some comments in the code say, such as some notifications, but those will or wont get done at a later date.
 
 ## How to setup SQLite after cloning the repo
 in powershell type in these commands:
@@ -29,6 +30,8 @@ You should also disable cloud models, auto-download uploads, and "Expose Ollama 
 You can change context length as you wish, for me 4k was enough for my small tests.
 
 And you should be ready to go!
+
+
 
 ## There is a test_data.txt in /Docs folder for quick uploading and testing.
 
