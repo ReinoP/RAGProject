@@ -8,10 +8,5 @@ namespace AIproject.Controllers
         {
             return View();
         }
-
-        //public IActionResult ChatPage()
-        //{
-        //    return View();
-        //}
     }
 }

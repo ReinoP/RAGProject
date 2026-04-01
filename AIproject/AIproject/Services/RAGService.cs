@@ -100,15 +100,12 @@ namespace AIproject.Services
         }
         public async Task<List<DocumentChunk>> QueryAsync(string userQuestion, int topK = 10)
         {
-            // 1. Get embedding for the query
             var queryEmbedding = await _embeddingService.GetEmbedding(userQuestion);
             var topChunks = new List<DocumentChunk>();
             try { 
                 //TODO do not load them always. Set up a cache, and update it on upload and/or periodically.
-                // 2. Load all chunks from DB
                 var chunks = await _dbContext.DocumentChunks.ToListAsync<DocumentChunk>();
 
-                // 3. Compute similarity for each chunk
                 var scoredChunks = chunks.Select(c =>
                 {
                     var chunkEmbedding = JsonSerializer.Deserialize<float[]>(c.Embedding);
@@ -118,7 +115,6 @@ namespace AIproject.Services
                     return new { Chunk = c, Score = score };
                 });
 
-                // 4. Take top K chunks
                 topChunks = scoredChunks
                     .OrderByDescending(x => x.Score)
                     .Take(topK)
@@ -135,17 +131,17 @@ namespace AIproject.Services
         }
         public async Task<string> HandleAsync(string input)
         {
-            var parsedInput = await _lLMService.ParseIntentAndTaskWithGemmaAsync(input);
             var topChunks = await QueryAsync(input);
             var prompt = BuildPrompt(topChunks, input);
-           // result = await RunTaskWithLlamaAsync(parsedData, input);
            return await _lLMService.RunTaskWithLlamaAsync(prompt);
         }
+
         public async Task EmptyDocumentChunks()
         {
             _dbContext.DocumentChunks.RemoveRange(_dbContext.DocumentChunks);
             _dbContext.SaveChanges();
         }
+        
         private string BuildPrompt(List<DocumentChunk> topChunks, string userQuestion)
         {
             if (topChunks == null || topChunks.Count == 0)
@@ -156,6 +152,8 @@ namespace AIproject.Services
             var context = string.Join("\n---\n", topChunks.Select(c => c.Content));
 
             return $@"
+                You are an assistant for a RAG system. Your job is to understand the user's input and determine if it is related to the data user has uploaded. 
+                If it is, identify the user's intent and the task they want to accomplish.
                 Do not use previous knowledge or make assumptions.
                 If the answer is not found in the given context, respond with 'Answer to this question is not found in the provided data'.
                 Do not infer, speculate, guess or fill gaps.
@@ -168,7 +166,6 @@ namespace AIproject.Services
                 Return valid HTML only.
 
                 Use ONLY the following context to answer the question:
-            
 
                 {context}
 

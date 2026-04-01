@@ -1,7 +1,5 @@
 ﻿using AIproject.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace AIproject.Controllers
