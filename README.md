@@ -42,7 +42,7 @@ And you should be ready to go!
 
 #### Features
 
-- AI-powered embeddings & responses using Ollama models  
+- AI-powered embeddings & responses using Ollama models
 - Semantic search
 - Simple caching system for improving response times  
 - MVC pattern for clean separation of concerns  
@@ -60,9 +60,9 @@ And you should be ready to go!
 ---
 
 ##### Notes
-/Docs/test_data.txt for quick testing.  
-This is a small learning project focused on understanding LLM + RAG concepts, rather than building a production-ready system.  
-Ollama service will run on your pc startup automatically unless you configure otherwise.  
-I used SQLite instead of an actual vector database and embeddings are stored as JSON strings to keep it simple, naturally for production this would not suffice.  
-Used local LLMs for gaining some more experience, and they were free, flexible and enough for my purposes with this project.  
-There are still some improvements that could be done, as some comments in the code say, such as some UI notifications, but those will or wont get done at a later date.
+- /Docs/test_data.txt for quick testing.
+- This is a small learning project focused on understanding LLM + RAG concepts, rather than building a production-ready system.
+- Ollama service will run on your pc startup automatically unless you configure otherwise.
+- I used SQLite instead of an actual vector database and embeddings are stored as JSON strings to keep it simple, naturally for production this would not suffice.
+- Used local LLMs for gaining some more experience, and they were free, flexible and enough for my purposes with this project.
+- There are still some improvements that could be done, as some comments in the code say, such as some UI notifications, but those will or wont get done at a later date.
