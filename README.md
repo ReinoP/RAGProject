@@ -1,13 +1,12 @@
 # Project
 
-This project is a full-stack web application that demonstrates a Retrieval-Augmented Generation (RAG) pipeline using local LLM models via Ollama.
+This project is a full-stack web application that demonstrates a Retrieval-Augmented Generation (RAG) pipeline using local LLM models via Ollama.  
 Developed using Visual Studio 2026.
 
-Users can upload text documents and query their content using natural language. 
+Users can upload text documents and query their content using natural language.  
 The system processes documents by splitting them into chunks, generating embeddings, and storing them for efficient semantic retrieval.
 
-When a user asks a question, the application retrieves the most relevant document chunks using cosine similarity 
-and provides them as context to a local LLM (Llama), which generates the final answer.
+When a user asks a question, the application retrieves the most relevant document chunks using cosine similarity and provides them as context to a local LLM (Llama), which generates the final answer.
 
 ---
 
@@ -61,9 +60,9 @@ And you should be ready to go!
 ---
 
 ##### Notes
-/Docs/test_data.txt for quick testing.
-Ollama service will run on your pc startup automatically unless you configure otherwise. 
-This is a small learning project focused on understanding LLM + RAG concepts, rather than building a production-ready system.
-I used SQLite instead of an actual vector database and embeddings are stored as JSON strings to keep it simple, naturally for production this would not suffice.
-Used local LLMs for gaining some more experience, and they were free, flexible and enough for my purposes with this project.
+/Docs/test_data.txt for quick testing.  
+This is a small learning project focused on understanding LLM + RAG concepts, rather than building a production-ready system.  
+Ollama service will run on your pc startup automatically unless you configure otherwise.  
+I used SQLite instead of an actual vector database and embeddings are stored as JSON strings to keep it simple, naturally for production this would not suffice.  
+Used local LLMs for gaining some more experience, and they were free, flexible and enough for my purposes with this project.  
 There are still some improvements that could be done, as some comments in the code say, such as some UI notifications, but those will or wont get done at a later date.
