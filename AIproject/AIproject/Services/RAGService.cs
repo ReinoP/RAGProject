@@ -1,4 +1,5 @@
 ﻿using AIproject.Data;
+using AIproject.Interfaces;
 using AIproject.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -13,13 +14,19 @@ namespace AIproject.Services
         private readonly EmbeddingService _embeddingService;
         private readonly LLMService _lLMService;
         private readonly IMemoryCache _cache;
-
-        public RAGService(AppDbContext dbContext, EmbeddingService embeddingService, LLMService llmService, IMemoryCache cache)
+        private readonly IUserContext _userContext;
+        private readonly string? _userId;
+        public RAGService(AppDbContext dbContext, EmbeddingService embeddingService, LLMService llmService, IMemoryCache cache, IUserContext userContext)
         {
             _dbContext = dbContext;
             _embeddingService = embeddingService;
             _lLMService = llmService;
             _cache = cache;
+            _userContext = userContext;
+
+            _userId = _userContext.GetUserId();
+            var name = _userContext.GetUserName();
+
         }
         public async Task<List<string>> ChunkText(string text, int chunkSize = 500)
         {
@@ -37,6 +44,7 @@ namespace AIproject.Services
             }
             return chunks;
         }
+
         public async Task ProcessDocumentAsync(string content, string fileName)
         {
             var embeddings = new List<string>();
@@ -53,6 +61,7 @@ namespace AIproject.Services
 
                     var docChunk = new DocumentChunk
                     {
+                        UserId = _userId,
                         Content = chunk,
                         Embedding = embeddingJson,
                         SourceFile = fileName,
@@ -69,10 +78,11 @@ namespace AIproject.Services
 
             if (chunks.Any())
             {
-                _cache.Remove("chunks");
-
+                _cache.Remove("chunks_"+ _userId);
+                
                 _dbContext.DocumentChunks.AddRange(chunks.Select((c, idx) => new DocumentChunk
                 {
+                    UserId = _userId,
                     Content = c,
                     Embedding = embeddings[idx],
                     SourceFile = fileName,
@@ -106,17 +116,19 @@ namespace AIproject.Services
         {
             var queryEmbedding = await _embeddingService.GetEmbedding(userQuestion);
             var topChunks = new List<DocumentChunk>();
-            try { 
+            
+            try
+            { 
                 var chunks =  new List<DocumentChunk>();
-                if (_cache.TryGetValue("chunks", out List<DocumentChunk>? cachedChunks)){
+                if (_cache.TryGetValue("chunks_" + _userId, out List<DocumentChunk>? cachedChunks)){
                     chunks = cachedChunks;
                 }
                 else {
-                    chunks = await _dbContext.DocumentChunks.ToListAsync<DocumentChunk>();
+                    chunks = await _dbContext.DocumentChunks.Where(dc => dc.UserId == (_userId ?? string.Empty)).ToListAsync<DocumentChunk>();
                     var cacheOptions = new MemoryCacheEntryOptions()
                                        .SetSlidingExpiration(TimeSpan.FromMinutes(10)) 
                                        .SetAbsoluteExpiration(TimeSpan.FromMinutes(15)); 
-                    _cache.Set("chunks", chunks, cacheOptions);
+                    _cache.Set("chunks_" + _userId, chunks, cacheOptions);
                 }
 
                 var scoredChunks = chunks?.Select(c =>
@@ -147,14 +159,16 @@ namespace AIproject.Services
             var prompt = BuildPrompt(topChunks, input);
            return await _lLMService.RunTaskWithLlamaAsync(prompt);
         }
-
+        
         public async Task EmptyDocumentChunks()
         {
-            _cache.Remove("chunks");
-            _dbContext.DocumentChunks.RemoveRange(_dbContext.DocumentChunks);
+            _cache.Remove("chunks_" + _userId);
+            var relatedUserChunks = _dbContext.DocumentChunks.Where(dc => dc.UserId == _userId).ToList();
+            _dbContext.DocumentChunks.RemoveRange(relatedUserChunks);
             _dbContext.SaveChanges();
+
         }
-        
+
         private string BuildPrompt(List<DocumentChunk> topChunks, string userQuestion)
         {
             if (topChunks == null || topChunks.Count == 0)

@@ -1,7 +1,9 @@
-﻿using System.Text.Json;
+﻿using Microsoft.AspNetCore.Authorization;
+using System.Text.Json;
 
 namespace AIproject.Services
 {
+    [Authorize]
     public class EmbeddingService
     {
         private readonly HttpClient _http;

@@ -4,18 +4,37 @@
 
 <div class="min-h-screen" id="app">
     <!-- TopNavBar -->
-    <header class="fixed left-0 top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none">
-        <div class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
-            <div class="flex items-center gap-8">
-                <span class="text-xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-300 font-headline">RAG demo</span>
-            </div>
-            <div class="flex items-center gap-4">
-                <button @@click="setShowDeleteModal(true)" class="primary-gradient text-on-primary px-5 py-2 rounded-xl text-sm font-semibold active:scale-95 transition-transform shadow-md">
-                    Reset RAG Data
-                </button>
+<header class="fixed left-0 top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+    <div class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+        <div class="flex-1 text-left md:text-left">
+            <span class="text-xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-300 font-headline">RAG demo</span>
+        </div>
+        <div class="relative">
+            <button @@click="toggleShowDdlMenu" class="text-white p-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h12m-6 6h6m-6-12h6"></path>
+                </svg>
+            </button>
+            <!-- Dropdown menu -->
+            <div v-if="showDdlMenu" class="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg dark:bg-slate-800 dark:border-gray-600">
+                <ul class="py-2 text-sm text-gray-700 dark:text-gray-300">
+                    <li>
+                        <button @@click="setShowDeleteModal(true)" class="block px-4 py-2 text-sm hover:bg-indigo-100 dark:hover:bg-indigo-600 dark:hover:text-white">
+                            Reset context data
+                        </button>
+                    </li>
+                    <li>
+                        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm hover:bg-indigo-100 dark:hover:bg-indigo-600 dark:hover:text-white">
+                                Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
             </div>
         </div>
-    </header>
+    </div>
+</header>
     <!-- Main Canvas -->
     <main  class="pt-24 pb-12 px-6">
         <!-- Scrollable messages container. The max-height uses calc so it stays between the fixed header and the fixed input. -->
@@ -57,7 +76,7 @@
                             <button class="p-2 text-outline hover:text-primary hover:bg-primary-container rounded-lg transition-all" @@click="setShowUploadModal(true)"  >
                                 <span class="material-symbols-outlined" data-icon="attach_file" >attach_file</span>
                             </button>
-                            <button @@click="sendMessage" class="primary-gradient text-white flex items-center gap-2 px-6 py-2.5 rounded-lg font-headline font-bold text-sm shadow-lg active:scale-95 transition-transform">
+                            <button @@click="sendMessage" class="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 px-6 py-2.5 rounded-lg font-headline font-bold text-sm shadow-lg active:scale-95 transition-transform">
                                 <span>Ask</span>
                                 <span class="material-symbols-outlined text-sm" data-icon="send">send</span>
                             </button>
@@ -136,7 +155,7 @@
                         <button @@click="setShowDeleteModal(false)" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-gray-200 hover:bg-gray-300">
                             Cancel
                         </button>
-                        <button class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" @@click="resetRAGData" style="display: inline-flex;">
+                        <button class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" @@click="resetUserRAGData" style="display: inline-flex;">
                             <span>{{ loading ? 'Deleting...' : 'Delete' }}</span>
                             <span v-if="loading" class="mr-2">
                                   <svg v-if="loading" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -152,6 +171,7 @@
                 </div>
             </div>
         </div>
+
     </main>
 </div>
 
@@ -245,8 +265,8 @@
                 loading:false,
                 invalidFileType: false,
                 dataDeletionStatus: null,
-                dataUploadtatus: null
-
+                dataUploadtatus: null,
+                showDdlMenu:false,
             };
        },
        watch:{
@@ -310,7 +330,6 @@
 
                     }
                 } catch (e) {
-                    //TODO some ui error thing?
                     console.error("error", e);
                 } finally {
                     this.isSending = false;
@@ -331,8 +350,12 @@
             setShowDeleteModal(val){
                 this.showDeleteModal = val;
             },
-            async resetRAGData(){
+            toggleShowDdlMenu(){
+                this.showDdlMenu = !this.showDdlMenu;
+            },
+            async resetUserRAGData(){
                 this.dataDeletionStatus = null;
+                this.showDdlMenu = false;
 
                 if(this.showDeleteModal){
                     let res = await fetch("/api/api/DeleteRAGData", {

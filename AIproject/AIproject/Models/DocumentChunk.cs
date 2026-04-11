@@ -6,6 +6,7 @@ namespace AIproject.Models
     {
         [Key]
         public int Id;
+        public string UserId { get; set; }
         public string Content { get; set; }       
         public string Embedding { get; set; }     // serialized float[] (JSON)
         public string SourceFile { get; set; }    // optional, file name

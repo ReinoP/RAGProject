@@ -1,9 +1,11 @@
 ﻿using AIproject.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIproject.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<IdentityUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
@@ -20,6 +22,8 @@ namespace AIproject.Data
             modelBuilder.Entity<DocumentChunk>()
                 .Property(f => f.Id)
                 .ValueGeneratedOnAdd();
+
+            base.OnModelCreating(modelBuilder);
         }
     }
 }
