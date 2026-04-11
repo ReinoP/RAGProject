@@ -1,5 +1,6 @@
 ﻿using AIproject.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace AIproject.Controllers
@@ -13,16 +14,18 @@ namespace AIproject.Controllers
         {
             _ragService = ragService;
         }
-
-        [HttpPost("UploadFile")]
-        public async Task<IActionResult> UploadFile(IFormFile fileModel)
+        public class UploadRequest
         {
-            if (fileModel == null || fileModel.Length == 0)
-                return BadRequest("No file");
+            [Required]
+            public required IFormFile File { get; set; }
+        }
+        [HttpPost("UploadFile")]
+        public async Task<IActionResult> UploadFile([FromForm]UploadRequest request)
+        {
             try
             {
                 using var stream = new MemoryStream();
-                await fileModel.CopyToAsync(stream);
+                await request.File.CopyToAsync(stream);
 
                 var content = Encoding.UTF8.GetString(stream.ToArray());
                 if (content.Length > 10000)
@@ -34,7 +37,7 @@ namespace AIproject.Controllers
                     return BadRequest("File is empty.");
                 }
 
-                await _ragService.ProcessDocumentAsync(content, fileModel.FileName);
+                await _ragService.ProcessDocumentAsync(content, request.File.FileName);
 
                 return Ok(new { message = "File uploaded and processed" });
             }
