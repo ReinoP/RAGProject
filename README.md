@@ -47,7 +47,7 @@ And you should be ready to go!
 - Semantic search
 - Simple caching system for improving response times  
 - MVC pattern for clean separation of concerns  
-- Vue Options API for reactive and maintainable frontend components  
+- Vue (Options API) for frontend  
 - Simple UI
 
 ---
