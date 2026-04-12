@@ -2,18 +2,21 @@
 @{
 }
 
-<div class="min-h-screen" id="app">
+<div class="min-h-screen" id="app" v-cloak>
     <!-- TopNavBar -->
 <header class="fixed left-0 top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+    @* Hides content until app has mounted to prevent briefly visible tags on page loag *@
+     <style>
+      [v-cloak] { display: none; }
+    </style>
+
     <div class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
         <div class="flex-1 text-left md:text-left">
             <span class="text-xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-300 font-headline">RAG demo</span>
         </div>
         <div class="relative">
             <button @@click="toggleShowDdlMenu" class="text-white p-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h12m-6 6h6m-6-12h6"></path>
-                </svg>
+              @(User?.Identity?.Name ?? "Unknown user")
             </button>
             <!-- Dropdown menu -->
             <div v-if="showDdlMenu" class="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg dark:bg-slate-800 dark:border-gray-600">
@@ -70,13 +73,15 @@
                     <div class="relative flex items-center bg-surface-container-lowest rounded-xl p-1.5 transition-all focus-within:ring-2 focus-within:ring-primary/20">
                         <div class="flex-grow flex items-center px-4">
                             <span class="material-symbols-outlined text-outline mr-3" data-icon="temp_preferences_custom">temp_preferences_custom</span>
-                            <input @@keyup.enter="sendMessage" class="w-full bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline font-body py-3 text-sm" placeholder="Ask anything..." type="text" v-model="userInput"/>
+                            <input @@keyup.enter="sendMessage" class="w-full bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline font-body py-3 text-sm truncate" 
+                                placeholder="Ask anything..." type="text" v-model="userInput"/>
                         </div>
                         <div class="flex items-center gap-2 pr-2">
                             <button class="p-2 text-outline hover:text-primary hover:bg-primary-container rounded-lg transition-all" @@click="setShowUploadModal(true)"  >
                                 <span class="material-symbols-outlined" data-icon="attach_file" >attach_file</span>
                             </button>
-                            <button @@click="sendMessage" class="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 px-6 py-2.5 rounded-lg font-headline font-bold text-sm shadow-lg active:scale-95 transition-transform">
+                            <button @@click="sendMessage" 
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 px-6 py-2.5 rounded-lg font-headline font-bold text-sm shadow-lg active:scale-95 transition-transform">
                                 <span>Ask</span>
                                 <span class="material-symbols-outlined text-sm" data-icon="send">send</span>
                             </button>
@@ -202,6 +207,7 @@
         },
     }
 </script>
+
 <style>
     .material-symbols-outlined {
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -228,11 +234,24 @@
       transform: translateY(20px);
       transition: all 0.3s ease;
       pointer-events: none;
+       z-index: 9999;
     }
 
     .toast.show {
       opacity: 1;
       transform: translateY(0);
+    }
+
+    @@media (max-width: 768px) {
+    .toast {
+        right: 50%;
+        transform: translateX(50%) translateY(20px);
+        text-align: center;
+      }
+
+      .toast.show {
+        transform: translateX(50%) translateY(0);
+      }
     }
 
     .toast.success {
@@ -266,7 +285,7 @@
                 invalidFileType: false,
                 dataDeletionStatus: null,
                 dataUploadtatus: null,
-                showDdlMenu:false,
+                showDdlMenu:false
             };
        },
        watch:{
@@ -435,7 +454,7 @@
         },
         mounted(){
             let time = Date.now();
-            this.chatHistory.push({id:1, type:"ai", content:"Hello there! I am an AI assistant here to help you. I use Retrieval-augmented generation to answer your questions.", timestamp:time});
+            this.chatHistory.push({id:1, type:"ai", content:"Hello there! I am an AI assistant here to help you. I use Retrieval-augmented generation to answer your questions based on the data you have uploaded here.", timestamp:time});
             this.$nextTick(() => {
                 this.scrollToBottom();
             });

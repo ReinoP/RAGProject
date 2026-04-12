@@ -163,10 +163,12 @@ namespace AIproject.Services
         public async Task EmptyDocumentChunks()
         {
             _cache.Remove("chunks_" + _userId);
-            var relatedUserChunks = _dbContext.DocumentChunks.Where(dc => dc.UserId == _userId).ToList();
-            _dbContext.DocumentChunks.RemoveRange(relatedUserChunks);
-            _dbContext.SaveChanges();
-
+            var relatedUserChunks = _dbContext.DocumentChunks.Where(dc => dc.UserId == (_userId ?? string.Empty)).ToList();
+            if (relatedUserChunks.Any())
+            {
+                _dbContext.DocumentChunks.RemoveRange(relatedUserChunks);
+                _dbContext.SaveChanges();
+            }
         }
 
         private string BuildPrompt(List<DocumentChunk> topChunks, string userQuestion)
@@ -185,7 +187,8 @@ namespace AIproject.Services
                 If the answer is not found in the given context, respond with 'Answer to this question is not found in the provided data'.
                 Do not infer, speculate, guess or fill gaps.
                 Do NOT include Python syntax, comments, explanations, or Markdown.
-                Use tags like <p>, <ul>, <li>, <b>.
+                Do not include directions for LLM, only the answer to the user's question based on the provided context.
+                Use tags like <p>, <ul>, <li>, <b> for the answer.
                     - Use <p> for paragraphs
                     - Use <ul><li> for lists
                     - Use <b> for important labels
